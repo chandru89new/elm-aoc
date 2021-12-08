@@ -11,6 +11,7 @@
             "elm/html": "1.0.0",
             "elm-community/array-extra": "2.4.0",
             "elm-community/list-extra": "8.5.1",
+            "elm-community/maybe-extra": "5.2.1",
             "icidasset/elm-binary": "2.1.0",
             "truqu/elm-md5": "1.1.0"
         },
