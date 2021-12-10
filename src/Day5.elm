@@ -78,12 +78,7 @@ listMaybeSeq list =
                     Just (List.reverse rs)
 
                 head :: tail ->
-                    case head of
-                        Just a ->
-                            go tail (a :: rs)
-
-                        Nothing ->
-                            Nothing
+                    Maybe.andThen (\a -> go tail (a :: rs)) head
     in
     go list []
 

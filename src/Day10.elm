@@ -144,24 +144,43 @@ findErrorChar : String -> Maybe Char
 findErrorChar line =
     line
         |> String.toList
-        |> parseLine ( Nothing, [] )
-        |> Tuple.first
+        |> parseLine (Incomplete [])
+        |> errorFromParseResult
 
 
-parseLine : ( Maybe Char, List Char ) -> List Char -> ( Maybe Char, List Char )
-parseLine ( maybeChar, tracker ) inputChars =
-    case maybeChar of
-        Just x ->
-            ( Just x, [] )
+errorFromParseResult : ParseResult -> Maybe Char
+errorFromParseResult a =
+    case a of
+        Error x ->
+            Just x
 
-        Nothing ->
+        _ ->
+            Nothing
+
+
+type ParseResult
+    = Incomplete (List Char)
+    | Error Char
+    | Complete
+
+
+parseLine : ParseResult -> List Char -> ParseResult
+parseLine result inputChars =
+    case result of
+        Complete ->
+            Complete
+
+        Error char ->
+            Error char
+
+        Incomplete tracker ->
             case inputChars of
                 [] ->
-                    ( Nothing, tracker )
+                    Incomplete tracker
 
                 head :: tail ->
                     if isOpeningTag head then
-                        parseLine ( Nothing, unsafeGetClosingTag head :: tracker ) tail
+                        parseLine (Incomplete (unsafeGetClosingTag head :: tracker)) tail
 
                     else
                         case tracker of
@@ -170,10 +189,10 @@ parseLine ( maybeChar, tracker ) inputChars =
 
                             thead :: ttail ->
                                 if thead == head then
-                                    parseLine ( Nothing, ttail ) tail
+                                    parseLine (Incomplete ttail) tail
 
                                 else
-                                    parseLine ( Just head, [] ) tail
+                                    parseLine (Error head) tail
 
 
 isOpeningTag : Char -> Bool
@@ -213,8 +232,8 @@ filterIncompleteLines : String -> Maybe (List Char)
 filterIncompleteLines line =
     line
         |> String.toList
-        |> parseLine ( Nothing, [] )
-        |> Tuple.second
+        |> parseLine (Incomplete [])
+        |> incompleteFromParseResult
         |> Just
         |> Maybe.andThen
             (\l ->
@@ -224,6 +243,16 @@ filterIncompleteLines line =
                 else
                     Just l
             )
+
+
+incompleteFromParseResult : ParseResult -> List Char
+incompleteFromParseResult r =
+    case r of
+        Incomplete list ->
+            list
+
+        _ ->
+            []
 
 
 computeIncompleteScoreForLine : List Char -> Int
